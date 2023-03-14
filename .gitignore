@@ -1,3 +1,10 @@
+
+_upload_build
+.coda.json
+.coda-credentials.json
+.envrc
+test.ts
+
 # Logs
 logs
 *.log
