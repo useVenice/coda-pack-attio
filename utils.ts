@@ -30,6 +30,12 @@ export const zEmailOrDomain = z.string().transform((arg) => {
 
 // We need the url-parse package because the native one is not availble in Coda pack runtime
 
+export function getPathname(urlString: string) {
+  const prefix = urlString.includes('://') ? '' : 'https://'
+  const url = new URL(prefix + urlString)
+  return url.pathname
+}
+
 export function getDomain(urlString: string) {
   const prefix = urlString.includes('://') ? '' : 'https://'
   const url = new URL(prefix + urlString)

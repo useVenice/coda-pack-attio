@@ -1,7 +1,7 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
 import { collectionSchema, recordSchema } from './schemas'
-import { getDomain, zDomain, zEmailOrDomain } from './utils'
+import { getDomain, getPathname, zDomain, zEmailOrDomain } from './utils'
 
 export const pack = coda.newPack()
 
@@ -33,6 +33,21 @@ pack.addFormula({
   resultType: coda.ValueType.String,
   codaType: coda.ValueHintType.Url,
   execute: ([urlString]) => zDomain.parse(urlString),
+})
+
+pack.addFormula({
+  name: 'GetPathname',
+  description: 'Get the pathname of the input url',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [
+    coda.makeParameter({
+      name: 'url',
+      type: coda.ParameterType.String,
+      description: '',
+    }),
+  ],
+  resultType: coda.ValueType.String,
+  execute: ([urlString]) => getPathname(urlString),
 })
 
 pack.addFormula({
@@ -105,10 +120,8 @@ pack.addFormula({
 
 // MARK: - Column formats
 
-pack.addColumnFormat({
-  name: 'Domain',
-  formulaName: 'GetDomain',
-})
+pack.addColumnFormat({ name: 'Domain', formulaName: 'GetDomain' })
+pack.addColumnFormat({ name: 'Pathname', formulaName: 'GetPathname' })
 
 pack.addColumnFormat({
   name: 'Person',

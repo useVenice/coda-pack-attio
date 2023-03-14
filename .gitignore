@@ -3,7 +3,7 @@ _upload_build
 .coda.json
 .coda-credentials.json
 .envrc
-test.ts
+temp.ts
 
 # Logs
 logs

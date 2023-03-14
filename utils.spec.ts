@@ -1,5 +1,17 @@
-import { buildUrl, getDomain, zEmailOrDomain } from './utils'
 import URL from 'url-parse'
+import { buildUrl, getDomain, getPathname, zEmailOrDomain } from './utils'
+
+test.each([
+  ['http://google.com', '/'],
+  ['http://google.com?id=1232#fda', '/'],
+  ['http://www.google.com?id=1232#fda', '/'],
+  ['http://attio.com/ada/', '/ada/'],
+  ['attio.com', '/'],
+  ['app.attio.com/test?adf=122', '/test'],
+  ['tony@venice.is', '/'], // http:// gets added to prefix...
+])('getPathname(%o) -> %o', (input, output) => {
+  expect(getPathname(input)).toEqual(output)
+})
 
 test.each([
   ['http://google.com', 'google.com'],
