@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { makeZodSchemas } from './schemas'
 import { buildUrl } from './utils'
-import * as R from 'remeda'
 
 export function withAttio(opts: {
   workspaceSlug: string

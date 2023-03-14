@@ -92,3 +92,18 @@ export const recordSchema = coda.makeObjectSchema({
   idProperty: 'record_id',
   identity: { name: 'Record' },
 })
+
+export const entrySchema = coda.makeObjectSchema({
+  properties: {
+    entry_id: { type: t.String, fromKey: 'id' },
+    collection: collectionSchema,
+    record: recordSchema,
+    attributes: coda.makeObjectSchema({
+      // TODO: Parse attribute objects schema from attio collection metadata
+      properties: {},
+    }),
+  },
+  displayProperty: 'record',
+  idProperty: 'entry_id',
+  identity: { name: 'Entry' },
+})

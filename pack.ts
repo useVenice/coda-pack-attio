@@ -1,6 +1,6 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
-import { collectionSchema, recordSchema } from './coda-schemas'
+import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
 import { getPathname, zDomain, zEmailOrDomain, zUuid } from './utils'
 
 export const pack = coda.newPack()
@@ -183,7 +183,7 @@ pack.addSyncTable({
         },
       }),
     ],
-    // Would be nice to dedupe wih CollectionRecords table
+    // Would be nice to dedupe wih CollectionEntries table
     execute: async function ([collectionId], ctx) {
       const offset = Number.parseInt(
         `${ctx.sync.continuation?.['offset'] ?? 0}`,
@@ -204,14 +204,11 @@ pack.addSyncTable({
 })
 
 pack.addDynamicSyncTable({
-  name: 'CollectionRecords',
-  identityName: 'CollectionRecord',
+  name: 'CollectionEntries',
+  identityName: 'CollectionEntry',
   listDynamicUrls: async function (ctx) {
     const res = await withAttio(ctx.fetcher).listCollections()
-    return res.map((col) => ({
-      display: col.name,
-      value: col.id,
-    }))
+    return res.map((col) => ({ display: col.name, value: col.id }))
   },
   getName: async function (ctx) {
     const res = await withAttio(ctx.fetcher).listCollections()
@@ -221,13 +218,13 @@ pack.addDynamicSyncTable({
     )
   },
   getSchema: async function (_ctx) {
-    return recordSchema
+    return entrySchema
   },
-  getDisplayUrl: async function (context) {
-    return context.sync.dynamicUrl!
+  getDisplayUrl: async function (ctx) {
+    return ctx.sync.dynamicUrl!
   },
   formula: {
-    name: 'SyncCollecitonRecords',
+    name: 'SyncCollectionEntries',
     description: '',
     parameters: [],
     execute: async function ([], ctx) {
@@ -241,9 +238,8 @@ pack.addDynamicSyncTable({
         collectionId,
         { offset },
       )
-      const result = res.data.map(({ record: re }) => re)
       return {
-        result,
+        result: res.data as any[],
         continuation: res.next_page_offset
           ? { offset: res.next_page_offset }
           : undefined,
