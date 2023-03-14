@@ -1,6 +1,9 @@
-import * as coda from '@codahq/packs-sdk'
-import { unknown, z } from 'zod'
 import * as R from 'remeda'
+import { z } from 'zod'
+
+function joinName(person: { first_name?: string; last_name?: string }) {
+  return R.compact([person.first_name, person.last_name]).join(' ')
+}
 
 // MARK: - Zod schemas
 
@@ -11,6 +14,25 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     contact_type: z.enum(['person', 'company']),
   })
 
+  const role = z.object({
+    id: z.string(),
+    title: z.string().nullable(),
+    started_at: z.string().datetime().nullable(),
+    ended_at: z.string().datetime().nullable(),
+    created_at: z.string().datetime().nullable(),
+    company_record: z.object({
+      id: z.string(),
+      name: z.string().nullable(),
+    }),
+    person_record: z
+      .object({
+        id: z.string(),
+        first_name: z.string().nullable(),
+        last_name: z.string().nullable(),
+      })
+      .transform((person) => ({ ...person, name: joinName(person) })),
+  })
+
   const person = recordBase.extend({
     contact_type: z.literal('person'),
     first_name: z.string().nullable(),
@@ -18,6 +40,7 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     avatar_url: z.string().url().nullable(),
     description: z.string().nullable(),
     email_addresses: z.array(z.string()),
+    roles: z.array(role),
   })
 
   const company = recordBase.extend({
@@ -26,6 +49,7 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     logo_url: z.string().url().nullable(),
     description: z.string().nullable(),
     domains: z.array(z.string()),
+    roles: z.array(role),
   })
 
   const record = z.discriminatedUnion('contact_type', [person, company])
@@ -39,7 +63,7 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     ...(re.contact_type === 'company'
       ? { display_name: re.name, company: re, record_type: re.contact_type }
       : {
-          display_name: R.compact([re.first_name, re.last_name]).join(' '),
+          display_name: joinName(re),
           person: re,
           record_type: re.contact_type,
         }),
@@ -78,49 +102,3 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
 
   return { person, company, record, collection, entry, transformRecord }
 }
-// MARK: - Coda schemas
-
-export const collectionSchema = coda.makeObjectSchema({
-  properties: {
-    collection_id: { type: coda.ValueType.String, fromKey: 'id' },
-    collection_url: {
-      type: coda.ValueType.String,
-      codaType: coda.ValueHintType.Url,
-    },
-    name: { type: coda.ValueType.String },
-  },
-  displayProperty: 'name',
-  idProperty: 'collection_id',
-  featuredProperties: ['name'],
-})
-
-export const recordSchema = coda.makeObjectSchema({
-  properties: {
-    record_id: { type: coda.ValueType.String },
-    record_url: {
-      type: coda.ValueType.String,
-      codaType: coda.ValueHintType.Url,
-    },
-    record_type: { type: coda.ValueType.String }, // `person` vs. `company`. Is there a coda type for this?
-    display_name: { type: coda.ValueType.String },
-    person: coda.makeObjectSchema({
-      properties: {
-        email_addresses: {
-          type: coda.ValueType.Array,
-          items: coda.makeSchema({ type: coda.ValueType.String }),
-        },
-      },
-    }),
-    company: coda.makeObjectSchema({
-      properties: {
-        domains: {
-          type: coda.ValueType.Array,
-          items: coda.makeSchema({ type: coda.ValueType.String }),
-        },
-      },
-    }),
-  },
-  displayProperty: 'display_name',
-  idProperty: 'record_id',
-  featuredProperties: [],
-})

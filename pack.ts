@@ -1,7 +1,7 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
-import { collectionSchema, recordSchema } from './schemas'
-import { getDomain, getPathname, zDomain, zEmailOrDomain } from './utils'
+import { collectionSchema, recordSchema } from './coda-schemas'
+import { getPathname, zDomain, zEmailOrDomain, zUuid } from './utils'
 
 export const pack = coda.newPack()
 
@@ -51,42 +51,50 @@ pack.addFormula({
 })
 
 pack.addFormula({
-  name: 'AssertPerson',
-  description: 'Get or create the person',
+  name: 'GetOrCreatePerson',
+  description:
+    'Get or create the person based on email, or get person based on id',
   parameters: [
     coda.makeParameter({
-      name: 'email',
+      name: 'emailOrPersonId',
       type: coda.ParameterType.String,
       description: '',
     }),
   ],
   resultType: coda.ValueType.Object,
   schema: recordSchema,
-  execute: async function ([email], ctx) {
-    const res = await withAttio(ctx.fetcher).assertPerson({
-      email_addresses: [email],
-    })
-    return res
+  execute: function ([emailOrPersonId], ctx) {
+    if (!emailOrPersonId) {
+      return null
+    }
+    const attio = withAttio(ctx.fetcher)
+    return zUuid.safeParse(emailOrPersonId).success
+      ? attio.fetchPerson(emailOrPersonId)
+      : attio.assertPerson({ email_addresses: [emailOrPersonId] })
   },
 })
 
 pack.addFormula({
-  name: 'AssertCompany',
-  description: 'Get or create the company',
+  name: 'GetOrCreateCompany',
+  description:
+    'Get or create the company based on domain, or get company based on id',
   parameters: [
     coda.makeParameter({
-      name: 'domain',
+      name: 'domainOrCompanyId',
       type: coda.ParameterType.String,
       description: '',
     }),
   ],
   resultType: coda.ValueType.Object,
   schema: recordSchema,
-  execute: async function ([domain], ctx) {
-    const res = await withAttio(ctx.fetcher).assertCompany({
-      domains: [domain],
-    })
-    return res
+  execute: function ([domainOrCompanyId], ctx) {
+    if (!domainOrCompanyId) {
+      return null
+    }
+    const attio = withAttio(ctx.fetcher)
+    return zUuid.safeParse(domainOrCompanyId).success
+      ? attio.fetchCompany(domainOrCompanyId)
+      : attio.assertCompany({ domains: [domainOrCompanyId] })
   },
 })
 
@@ -126,13 +134,13 @@ pack.addColumnFormat({ name: 'Pathname', formulaName: 'GetPathname' })
 pack.addColumnFormat({
   name: 'Person',
   instructions: 'Assert person in attio crm',
-  formulaName: 'AssertPerson',
+  formulaName: 'GetOrCreatePerson',
 })
 
 pack.addColumnFormat({
   name: 'Company',
   instructions: 'Assert cmpany in attio crm',
-  formulaName: 'AssertCompany',
+  formulaName: 'GetOrCreateCompany',
 })
 
 pack.addColumnFormat({

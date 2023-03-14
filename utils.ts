@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 export const zEmail = z.string().email()
 export const zUrl = z.string().url()
+export const zUuid = z.string().uuid()
 export const zDomain = z.string().transform((arg, ctx) => {
   try {
     return getDomain(arg)
