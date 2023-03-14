@@ -165,6 +165,44 @@ pack.addSyncTable({
   },
 })
 
+pack.addSyncTable({
+  name: 'Records',
+  identityName: 'Record',
+  schema: recordSchema,
+  formula: {
+    name: 'SyncRecords',
+    description: '',
+    parameters: [
+      coda.makeParameter({
+        name: 'collectionId',
+        type: coda.ParameterType.String,
+        description: 'Id of the collection',
+        autocomplete: async function (ctx, search) {
+          const res = await withAttio(ctx.fetcher).listCollections()
+          return coda.autocompleteSearchObjects(search, res, 'name', 'id')
+        },
+      }),
+    ],
+    // Would be nice to dedupe wih CollectionRecords table
+    execute: async function ([collectionId], ctx) {
+      const offset = Number.parseInt(
+        `${ctx.sync.continuation?.['offset'] ?? 0}`,
+      )
+      const res = await withAttio(ctx.fetcher).listCollectionEntries(
+        collectionId,
+        { offset },
+      )
+      const result = res.data.map(({ record: re }) => re)
+      return {
+        result,
+        continuation: res.next_page_offset
+          ? { offset: res.next_page_offset }
+          : undefined,
+      }
+    },
+  },
+})
+
 pack.addDynamicSyncTable({
   name: 'CollectionRecords',
   identityName: 'CollectionRecord',
@@ -194,14 +232,14 @@ pack.addDynamicSyncTable({
     parameters: [],
     execute: async function ([], ctx) {
       const collectionId = ctx.sync.dynamicUrl
-      const limit = 25
+
       const offset = Number.parseInt(
         `${ctx.sync.continuation?.['offset'] ?? 0}`,
       )
 
       const res = await withAttio(ctx.fetcher).listCollectionEntries(
         collectionId,
-        { limit, offset },
+        { offset },
       )
       const result = res.data.map(({ record: re }) => re)
       return {

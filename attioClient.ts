@@ -49,13 +49,13 @@ export function withAttio(opts: {
       ),
     listCollectionEntries: (
       collectionId: string,
-      params: { limit: number; offset: number } = { limit: 25, offset: 0 },
+      { limit = 100, offset = 0 }: { limit?: number; offset?: number },
     ) =>
       jsonHttp(
         'GET',
         buildUrl(
           `https://api.attio.com/v1/collections/${collectionId}/entries`,
-          params,
+          { limit, offset },
         ),
       ).then((res: z.infer<typeof zListCollectionEntriesResponse>) => ({
         ...res,

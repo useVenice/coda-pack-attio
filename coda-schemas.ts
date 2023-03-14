@@ -11,7 +11,6 @@ export const collectionSchema = coda.makeObjectSchema({
   },
   displayProperty: 'name',
   idProperty: 'collection_id',
-  featuredProperties: ['name'],
   identity: { name: 'Collection' },
 })
 
@@ -43,6 +42,7 @@ export const roleSchema = coda.makeObjectSchema({
   },
   displayProperty: 'title',
   idProperty: 'role_id',
+  identity: { name: 'Role' },
 })
 
 export const personSchema = coda.makeObjectSchema({
@@ -62,6 +62,7 @@ export const personSchema = coda.makeObjectSchema({
   // https://community.coda.io/t/unable-to-use-zod-in-coda-packs-e-this-issues-this-issues-e-could-not-be-cloned/38378/2
   displayProperty: 'first_name', // Name does not exist unless we fix the transform...
   idProperty: 'person_id',
+  identity: { name: 'Person' },
 })
 
 export const companySchema = coda.makeObjectSchema({
@@ -75,6 +76,7 @@ export const companySchema = coda.makeObjectSchema({
   },
   displayProperty: 'name',
   idProperty: 'company_id',
+  identity: { name: 'Company' },
 })
 
 export const recordSchema = coda.makeObjectSchema({
@@ -88,6 +90,5 @@ export const recordSchema = coda.makeObjectSchema({
   },
   displayProperty: 'display_name',
   idProperty: 'record_id',
-  featuredProperties: [],
   identity: { name: 'Record' },
 })
