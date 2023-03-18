@@ -91,10 +91,15 @@ pack.addFormula({
     }
     const [first_name, last_name] = splitName(email.data.name)
 
-    return attio.assertPerson({
-      email_addresses: [email.data.email],
-      ...(updateName && { first_name, last_name }),
-    })
+    return attio
+      .assertPerson({
+        email_addresses: [email.data.email],
+        ...(updateName && { first_name, last_name }),
+      })
+      .then((res) => ({
+        ...res,
+        meta: { name: email.data.name, first_name, last_name },
+      }))
   },
 })
 

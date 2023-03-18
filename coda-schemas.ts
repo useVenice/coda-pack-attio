@@ -87,6 +87,17 @@ export const recordSchema = coda.makeObjectSchema({
     display_name: { type: t.String },
     person: personSchema,
     company: companySchema,
+    /** Optional metadata */
+    meta: coda.makeObjectSchema({
+      properties: {
+        // input: { type: t.String }, // Add me when we have time to refactor
+        // RFC 5322 data
+        name: { type: t.String },
+        first_name: { type: t.String },
+        last_name: { type: t.String },
+      },
+      displayProperty: 'name',
+    }),
   },
   displayProperty: 'display_name',
   idProperty: 'record_id',
