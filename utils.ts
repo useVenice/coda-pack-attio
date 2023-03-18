@@ -62,7 +62,7 @@ export function parseEmails(str: string) {
       const [firstName, lastName] = splitName(mb.name)
       return {
         // https://github.com/jackbearheart/email-addresses/issues/62
-        email: mb.node.tokens.trim(),
+        display: mb.node.tokens.trim(),
         address: mb.address,
         name: mb.name,
         firstName,

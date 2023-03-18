@@ -67,7 +67,7 @@ pack.addFormula({
   resultType: t.Array,
   items: coda.makeObjectSchema({
     properties: {
-      email: { type: t.String, description: 'Parsed tokens' },
+      display: { type: t.String, description: 'Name <address> in full' },
       address: {
         type: t.String,
         codaType: ht.Email,
@@ -76,7 +76,7 @@ pack.addFormula({
       firstName: { type: t.String },
       lastName: { type: t.String },
     },
-    displayProperty: 'email',
+    displayProperty: 'display',
   }),
   execute: ([emails]) => parseEmails(emails),
 })
