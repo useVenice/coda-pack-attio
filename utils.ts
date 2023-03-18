@@ -68,6 +68,14 @@ export function getDomain(urlString: string) {
   throw new Error(`${parsed.error?.code}: ${parsed.error?.message}`)
 }
 
+export function splitName(
+  name: string | null | undefined,
+): [firstName: string, lastName: string] {
+  // Omitting empty string
+  const [firstName, ...rest] = (name ?? '').split(' ').filter((p) => !!p)
+  return [firstName, rest.length ? rest.join(' ') : undefined]
+}
+
 export function buildUrl(urlString: string, query: Record<string, unknown>) {
   const url = new URL(urlString)
   url.set('query', URL.qs.stringify(query))

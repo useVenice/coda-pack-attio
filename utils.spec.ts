@@ -3,6 +3,7 @@ import {
   buildUrl,
   getDomain,
   getPathname,
+  splitName,
   zEmail,
   zEmailOrDomain,
 } from './utils'
@@ -30,6 +31,15 @@ test.each([
   ['tony@venice.is', 'venice.is'], // http:// gets added to prefix...
 ])('getDomain(%o) -> %o', (input, output) => {
   expect(getDomain(input)).toEqual(output)
+})
+
+test.each([
+  ['T X', 'T', 'X'],
+  ['', undefined, undefined],
+  ['Chris', 'Chris', undefined],
+  ['Chris ', 'Chris', undefined],
+])('splitName(%o) -> [%o, %o]', (input, firstName, lastName) => {
+  expect(splitName(input)).toEqual([firstName, lastName])
 })
 
 test.each([

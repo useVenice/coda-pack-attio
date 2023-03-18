@@ -1,7 +1,14 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
 import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
-import { getPathname, zDomain, zEmail, zEmailOrDomain, zUuid } from './utils'
+import {
+  getPathname,
+  splitName,
+  zDomain,
+  zEmail,
+  zEmailOrDomain,
+  zUuid,
+} from './utils'
 
 export const pack = coda.newPack()
 
@@ -60,10 +67,17 @@ pack.addFormula({
       type: coda.ParameterType.String,
       description: '',
     }),
+    coda.makeParameter({
+      name: 'updateName',
+      type: coda.ParameterType.Boolean,
+      optional: true,
+      description:
+        'Whether to use RFC 5322 name (e.g. Bart Christi <bart@attio.com>) to update name in attio',
+    }),
   ],
   resultType: coda.ValueType.Object,
   schema: recordSchema,
-  execute: function ([emailOrPersonId], ctx) {
+  execute: function ([emailOrPersonId, updateName], ctx) {
     if (!emailOrPersonId) {
       return null
     }
@@ -75,7 +89,12 @@ pack.addFormula({
     if (email.success === false) {
       throw new coda.UserVisibleError(email.error.message, email.error)
     }
-    return attio.assertPerson({ email_addresses: [email.data.email] })
+    const [first_name, last_name] = splitName(email.data.name)
+
+    return attio.assertPerson({
+      email_addresses: [email.data.email],
+      ...(updateName && { first_name, last_name }),
+    })
   },
 })
 

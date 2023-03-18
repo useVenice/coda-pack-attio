@@ -34,11 +34,22 @@ export function withAttio(opts: {
       jsonHttp('GET', `https://api.attio.com/v1/companies/${company_id}`).then(
         (r) => schemas.transformRecord(r),
       ),
-    assertPerson: (input: { email_addresses: string[] }) =>
+    /** https://developers.attio.com/#assert-person-record */
+    assertPerson: (input: {
+      email_addresses: string[]
+      first_name?: string
+      last_name?: string
+      description?: string
+    }) =>
       jsonHttp('PUT', 'https://api.attio.com/v1/people', input).then((r) =>
         schemas.transformRecord(r),
       ),
-    assertCompany: (input: { domains: string[] }) =>
+    /** https://developers.attio.com/#assert-company-record */
+    assertCompany: (input: {
+      domains: string[]
+      name?: string
+      description?: string
+    }) =>
       jsonHttp('PUT', 'https://api.attio.com/v1/companies', input).then((r) =>
         schemas.transformRecord(r),
       ),
