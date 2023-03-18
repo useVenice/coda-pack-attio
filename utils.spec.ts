@@ -2,6 +2,7 @@ import URL from 'url-parse'
 import {
   buildUrl,
   parseDomain,
+  parseEmails,
   parsePathname,
   splitName,
   zEmail,
@@ -43,6 +44,34 @@ test.each([
 })
 
 test.each([
+  ['hi@venice.is', [['hi@venice.is', null]]],
+  ['<hi@venice.is>', [['hi@venice.is', null]]],
+  ['Hi Venice <hi@venice.is>', [['hi@venice.is', 'Hi Venice']]],
+  ['"" <hi@venice.is>', [['hi@venice.is', '']]],
+  [
+    'A Group:Ed Jones <c@a.test>,joe@where.test,John <jdoe@one.test>;',
+    [
+      ['c@a.test', 'Ed Jones'],
+      ['joe@where.test', null],
+      ['jdoe@one.test', 'John'],
+    ],
+  ],
+  ['@venice.is>', []],
+  ['bademal', []],
+  [
+    'Dan Romeo <dromeo@gmail.com>, David Da <david@da.ca>',
+    [
+      ['dromeo@gmail.com', 'Dan Romeo'],
+      ['david@da.ca', 'David Da'],
+    ],
+  ],
+])('parseEmails(%o) -> %j', (input, output) => {
+  const _res = zEmail.safeParse(input)
+  const res = _res.success ? _res.data : undefined
+  expect(parseEmails(input).map((r) => [r.email, r.name])).toEqual(output)
+})
+
+test.each([
   ['hi@venice.is', 'hi@venice.is', null],
   ['<hi@venice.is>', 'hi@venice.is', null],
   ['Hi Venice <hi@venice.is>', 'hi@venice.is', 'Hi Venice'],
@@ -54,6 +83,11 @@ test.each([
   ],
   ['@venice.is>', undefined, undefined],
   ['bademal', undefined, undefined],
+  [
+    'Dan Romeo <dromeo@gmail.com>, David Da <david@da.ca>',
+    'dromeo@gmail.com',
+    'Dan Romeo',
+  ],
 ])('zEmail(%o) -> [%o, %o]', (input, email, name) => {
   const _res = zEmail.safeParse(input)
   const res = _res.success ? _res.data : undefined

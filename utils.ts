@@ -1,6 +1,6 @@
-import URL from 'url-parse'
-import psl from 'psl'
 import addrs from 'email-addresses'
+import psl from 'psl'
+import URL from 'url-parse'
 import { z } from 'zod'
 
 export const zUrl = z.string().url()
@@ -50,20 +50,22 @@ export const zEmailOrDomain = z.string().transform((arg) => {
 // We need the url-parse package because the native one is not availble in Coda pack runtime
 
 export function parseEmail(str: string) {
-  const parsed = addrs.parseOneAddress(str)
-  const mb = parsed?.type === 'mailbox' ? parsed : parsed?.addresses[0]
-  if (!mb) {
-    return
-  }
-  const [firstName, lastName] = splitName(mb.name)
-  // TODO: Return name as well, first name / last name
-  return {
-    input: str,
-    email: mb.address,
-    name: mb.name,
-    firstName,
-    lastName,
-  }
+  return parseEmails(str)[0]
+}
+
+export function parseEmails(str: string) {
+  return (addrs.parseAddressList(str) ?? [])
+    .flatMap((p) => (p.type === 'mailbox' ? [p] : p.addresses))
+    .map((mb) => {
+      const [firstName, lastName] = splitName(mb.name)
+      return {
+        input: str,
+        email: mb.address,
+        name: mb.name,
+        firstName,
+        lastName,
+      }
+    })
 }
 
 export function parseDomain(urlString: string) {
