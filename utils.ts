@@ -113,3 +113,17 @@ export function buildUrl(urlString: string, query: Record<string, unknown>) {
   url.set('query', URL.qs.stringify(query))
   return url.toString()
 }
+
+// const Handlebars = require("handlebars");
+// const template = Handlebars.compile("Name: {{name}}");
+// console.log(template({ name: "Nils" }));
+
+import Handlebars from 'handlebars'
+
+export function renderTemplate(
+  templateStr: string,
+  variables: Record<string, unknown>,
+) {
+  const template = Handlebars.compile(templateStr)
+  return template(variables)
+}

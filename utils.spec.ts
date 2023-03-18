@@ -5,10 +5,19 @@ import {
   parseDomain,
   parseEmails,
   parsePathname,
+  renderTemplate,
   splitName,
   zEmail,
   zEmailOrDomain,
 } from './utils'
+
+test.each([
+  ['Hello {{name}}', { name: 'there' }, 'Hello there'],
+  ['Hello {{name}}', {}, 'Hello '],
+  ['Hello {{nested.name}}', { nested: { name: 'there' } }, 'Hello there'],
+])('renderTemplate(%o, %o) -> %o', (templateStr, variables, output) => {
+  expect(renderTemplate(templateStr, variables)).toEqual(output)
+})
 
 test.each([
   ['http://google.com', '/'],
