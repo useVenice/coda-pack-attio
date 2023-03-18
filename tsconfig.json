@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "lib": ["es2020"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    // TODO: Turn on strict mode...
+    // "strict": true
   }
 }

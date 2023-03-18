@@ -1,5 +1,11 @@
 import URL from 'url-parse'
-import { buildUrl, getDomain, getPathname, zEmailOrDomain } from './utils'
+import {
+  buildUrl,
+  getDomain,
+  getPathname,
+  zEmail,
+  zEmailOrDomain,
+} from './utils'
 
 test.each([
   ['http://google.com', '/'],
@@ -24,6 +30,25 @@ test.each([
   ['tony@venice.is', 'venice.is'], // http:// gets added to prefix...
 ])('getDomain(%o) -> %o', (input, output) => {
   expect(getDomain(input)).toEqual(output)
+})
+
+test.each([
+  ['hi@venice.is', 'hi@venice.is', null],
+  ['<hi@venice.is>', 'hi@venice.is', null],
+  ['Hi Venice <hi@venice.is>', 'hi@venice.is', 'Hi Venice'],
+  ['"" <hi@venice.is>', 'hi@venice.is', ''],
+  [
+    'A Group:Ed Jones <c@a.test>,joe@where.test,John <jdoe@one.test>;',
+    'c@a.test',
+    'Ed Jones',
+  ],
+  ['@venice.is>', undefined, undefined],
+  ['bademal', undefined, undefined],
+])('zEmail(%o) -> [%o, %o]', (input, email, name) => {
+  const _res = zEmail.safeParse(input)
+  const res = _res.success ? _res.data : undefined
+  expect(res?.email).toEqual(email)
+  expect(res?.name).toEqual(name)
 })
 
 test.each([

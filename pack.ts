@@ -1,7 +1,7 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
 import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
-import { getPathname, zDomain, zEmailOrDomain, zUuid } from './utils'
+import { getPathname, zDomain, zEmail, zEmailOrDomain, zUuid } from './utils'
 
 export const pack = coda.newPack()
 
@@ -68,9 +68,14 @@ pack.addFormula({
       return null
     }
     const attio = withAttio(ctx.fetcher)
-    return zUuid.safeParse(emailOrPersonId).success
-      ? attio.fetchPerson(emailOrPersonId)
-      : attio.assertPerson({ email_addresses: [emailOrPersonId] })
+    if (zUuid.safeParse(emailOrPersonId).success) {
+      return attio.fetchPerson(emailOrPersonId)
+    }
+    const email = zEmail.safeParse(emailOrPersonId)
+    if (email.success === false) {
+      throw new coda.UserVisibleError(email.error.message, email.error)
+    }
+    return attio.assertPerson({ email_addresses: [email.data.email] })
   },
 })
 
@@ -112,14 +117,14 @@ pack.addFormula({
   resultType: coda.ValueType.Object,
   schema: recordSchema,
   execute: async function ([emailOrDomain], ctx) {
-    const { type, value } = zEmailOrDomain.parse(emailOrDomain)
-    if (type === 'email') {
+    const parsed = zEmailOrDomain.parse(emailOrDomain)
+    if (parsed.type === 'email') {
       return await withAttio(ctx.fetcher).assertPerson({
-        email_addresses: [value],
+        email_addresses: [parsed.value],
       })
-    } else if (type === 'domain') {
+    } else if (parsed.type === 'domain') {
       return await withAttio(ctx.fetcher).assertCompany({
-        domains: [value],
+        domains: [parsed.value],
       })
     }
     return null
