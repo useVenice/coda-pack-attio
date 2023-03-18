@@ -3,9 +3,11 @@ import { withAttio as _withAttio } from './attioClient'
 import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
 import {
   arrayToSentence,
+  jsonBuildObject,
   parseDomain,
   parseEmails,
   parsePathname,
+  renderTemplate,
   splitName,
   zEmail,
   zEmailOrDomain,
@@ -38,6 +40,46 @@ function ensureExists<T>(value: T, message: string) {
 }
 
 // MARK: - Formulas
+
+pack.addFormula({
+  name: 'JsonBuildObject',
+  description: 'Create json (returns as string) from key value paris',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [],
+  varargParameters: [
+    coda.makeParameter({
+      type: coda.ParameterType.String,
+      name: 'keyValues',
+      description: 'Key value pairs',
+    }),
+  ],
+  resultType: t.String,
+  execute: (keyValues) => JSON.stringify(jsonBuildObject(...keyValues)),
+})
+
+pack.addFormula({
+  name: 'RenderTemplate',
+  description: 'Great for substitution',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [
+    coda.makeParameter({
+      name: 'templatStr',
+      type: pt.String,
+      description: 'Handlebars template',
+    }),
+  ],
+  varargParameters: [
+    coda.makeParameter({
+      type: coda.ParameterType.String,
+      name: 'keyValues',
+      description: 'Key value pairs',
+    }),
+  ],
+  resultType: t.String,
+  execute: ([templatStr, ...keyValues]) =>
+    renderTemplate(templatStr, jsonBuildObject(...keyValues)),
+})
+
 pack.addFormula({
   name: 'ArrayToSentence',
   description: '@see https://github.com/shinnn/array-to-sentence',

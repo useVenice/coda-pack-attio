@@ -2,6 +2,8 @@ import URL from 'url-parse'
 import {
   arrayToSentence,
   buildUrl,
+  jsonBuildObject,
+  jsonParsePrimitive,
   parseDomain,
   parseEmails,
   parsePathname,
@@ -10,6 +12,30 @@ import {
   zEmail,
   zEmailOrDomain,
 } from './utils'
+
+test.each([
+  [true, true],
+  [3, 3],
+  [null, null],
+  [undefined, undefined],
+  ['true', true],
+  [3232, 3232],
+  ['null', null],
+  ['undefined', 'undefined'],
+  ['hello', 'hello'],
+  ['"tests"', 'tests'],
+])('jsonParsePrimitive(%j) -> %o', (input, output) => {
+  expect(jsonParsePrimitive(input)).toEqual(output)
+})
+
+test.each([
+  [[], {}],
+  [['hello', 'world'], { hello: 'world' }],
+  [['hello', 'world', 'novalue'], { hello: 'world', novalue: undefined }],
+  [['hello', 'world', 3, 4], { hello: 'world', '3': 4 }],
+])('jsonBuildObject(%j) -> %o', (input, output) => {
+  expect(jsonBuildObject(...input)).toEqual(output)
+})
 
 test.each([
   ['Hello {{name}}', { name: 'there' }, 'Hello there'],

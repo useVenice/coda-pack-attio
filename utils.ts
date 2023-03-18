@@ -2,6 +2,8 @@ import addrs from 'email-addresses'
 import psl from 'psl'
 import URL from 'url-parse'
 import { z } from 'zod'
+import Handlebars from 'handlebars'
+import * as R from 'remeda'
 
 export const zUrl = z.string().url()
 export const zUuid = z.string().uuid()
@@ -114,16 +116,28 @@ export function buildUrl(urlString: string, query: Record<string, unknown>) {
   return url.toString()
 }
 
-// const Handlebars = require("handlebars");
-// const template = Handlebars.compile("Name: {{name}}");
-// console.log(template({ name: "Nils" }));
-
-import Handlebars from 'handlebars'
-
 export function renderTemplate(
   templateStr: string,
   variables: Record<string, unknown>,
 ) {
   const template = Handlebars.compile(templateStr)
   return template(variables)
+}
+
+/** Inspired by postgres jsonBuildObject */
+export function jsonBuildObject(...keyValues: (string | number | boolean)[]) {
+  return R.pipe(
+    keyValues,
+    R.chunk(2),
+    R.map(([key, value]) => [key, jsonParsePrimitive(value)]),
+    (pairs) => R.fromPairs(pairs as [string, string][]),
+  )
+}
+
+export function jsonParsePrimitive(value: unknown) {
+  try {
+    return JSON.parse(`${value}`)
+  } catch {
+    return value
+  }
 }
