@@ -58,11 +58,11 @@ export function parseEmail(str: string) {
   const [firstName, lastName] = splitName(mb.name)
   // TODO: Return name as well, first name / last name
   return {
+    input: str,
     email: mb.address,
     name: mb.name,
     firstName,
     lastName,
-    display: mb.name || mb.address,
   }
 }
 

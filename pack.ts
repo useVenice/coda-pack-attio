@@ -6,7 +6,6 @@ import {
   parseEmail,
   parsePathname,
   splitName,
-  zDomain,
   zEmail,
   zEmailOrDomain,
   zUuid,
@@ -30,6 +29,13 @@ pack.setUserAuthentication({
 const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) =>
   _withAttio({ ...opts, workspaceSlug: WORKSPACE_SLUG_HARDCODE })
 
+function ensureExists<T>(value: T, message: string) {
+  if (value != null) {
+    return value
+  }
+  throw new coda.UserVisibleError(message)
+}
+
 // MARK: - Formulas
 
 pack.addFormula({
@@ -46,6 +52,7 @@ pack.addFormula({
   resultType: t.Object,
   schema: coda.makeObjectSchema({
     properties: {
+      input: { type: t.String },
       email: {
         type: t.String,
         codaType: ht.Email,
@@ -53,11 +60,11 @@ pack.addFormula({
       name: { type: t.String },
       firstName: { type: t.String },
       lastName: { type: t.String },
-      display: { type: t.String },
     },
-    displayProperty: 'display',
+    displayProperty: 'input',
   }),
-  execute: ([email]) => parseEmail(email),
+  execute: ([email]) =>
+    ensureExists(parseEmail(email), `${email} is not a valid email`),
 })
 
 pack.addFormula({
