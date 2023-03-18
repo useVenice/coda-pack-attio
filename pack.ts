@@ -2,7 +2,9 @@ import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
 import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
 import {
-  getPathname,
+  parseDomain,
+  parseEmail,
+  parsePathname,
   splitName,
   zDomain,
   zEmail,
@@ -11,6 +13,10 @@ import {
 } from './utils'
 
 export const pack = coda.newPack()
+
+const t = coda.ValueType
+const ht = coda.ValueHintType
+const pt = coda.ParameterType
 
 /** TODO: This should be provided by the user */
 const WORKSPACE_SLUG_HARDCODE = 'venice'
@@ -27,34 +33,54 @@ const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) =>
 // MARK: - Formulas
 
 pack.addFormula({
-  name: 'GetDomain',
-  description: 'Get the domain name of a url',
+  name: 'ParseEmail',
+  description: 'Parse RFC 5322 email',
   connectionRequirement: coda.ConnectionRequirement.None,
   parameters: [
     coda.makeParameter({
-      name: 'url',
-      type: coda.ParameterType.String,
-      description: '',
+      name: 'email',
+      type: pt.String,
+      description: 'e.g. Bart Adams <bar@adams.com>',
     }),
   ],
-  resultType: coda.ValueType.String,
-  codaType: coda.ValueHintType.Url,
-  execute: ([urlString]) => zDomain.parse(urlString),
+  resultType: t.Object,
+  schema: coda.makeObjectSchema({
+    properties: {
+      email: {
+        type: t.String,
+        codaType: ht.Email,
+      },
+      name: { type: t.String },
+      firstName: { type: t.String },
+      lastName: { type: t.String },
+      display: { type: t.String },
+    },
+    displayProperty: 'display',
+  }),
+  execute: ([email]) => parseEmail(email),
 })
 
 pack.addFormula({
-  name: 'GetPathname',
+  name: 'ParseDomain',
+  description: 'Get the domain name of a url',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [
+    coda.makeParameter({ name: 'url', type: pt.String, description: '' }),
+  ],
+  resultType: t.String,
+  codaType: ht.Url,
+  execute: ([urlString]) => parseDomain(urlString),
+})
+
+pack.addFormula({
+  name: 'ParsePathname',
   description: 'Get the pathname of the input url',
   connectionRequirement: coda.ConnectionRequirement.None,
   parameters: [
-    coda.makeParameter({
-      name: 'url',
-      type: coda.ParameterType.String,
-      description: '',
-    }),
+    coda.makeParameter({ name: 'url', type: pt.String, description: '' }),
   ],
-  resultType: coda.ValueType.String,
-  execute: ([urlString]) => getPathname(urlString),
+  resultType: t.String,
+  execute: ([urlString]) => parsePathname(urlString),
 })
 
 pack.addFormula({
@@ -64,18 +90,18 @@ pack.addFormula({
   parameters: [
     coda.makeParameter({
       name: 'emailOrPersonId',
-      type: coda.ParameterType.String,
+      type: pt.String,
       description: '',
     }),
     coda.makeParameter({
       name: 'updateName',
-      type: coda.ParameterType.Boolean,
+      type: pt.Boolean,
       optional: true,
       description:
         'Whether to use RFC 5322 name (e.g. Bart Christi <bart@attio.com>) to update name in attio',
     }),
   ],
-  resultType: coda.ValueType.Object,
+  resultType: t.Object,
   schema: recordSchema,
   execute: function ([emailOrPersonId, updateName], ctx) {
     if (!emailOrPersonId) {
@@ -110,11 +136,11 @@ pack.addFormula({
   parameters: [
     coda.makeParameter({
       name: 'domainOrCompanyId',
-      type: coda.ParameterType.String,
+      type: pt.String,
       description: '',
     }),
   ],
-  resultType: coda.ValueType.Object,
+  resultType: t.Object,
   schema: recordSchema,
   execute: function ([domainOrCompanyId], ctx) {
     if (!domainOrCompanyId) {
@@ -134,11 +160,11 @@ pack.addFormula({
   parameters: [
     coda.makeParameter({
       name: 'emailOrDomain',
-      type: coda.ParameterType.String,
+      type: pt.String,
       description: '',
     }),
   ],
-  resultType: coda.ValueType.Object,
+  resultType: t.Object,
   schema: recordSchema,
   execute: async function ([emailOrDomain], ctx) {
     const parsed = zEmailOrDomain.parse(emailOrDomain)
@@ -157,8 +183,9 @@ pack.addFormula({
 
 // MARK: - Column formats
 
-pack.addColumnFormat({ name: 'Domain', formulaName: 'GetDomain' })
-pack.addColumnFormat({ name: 'Pathname', formulaName: 'GetPathname' })
+pack.addColumnFormat({ name: 'Domain', formulaName: 'ParseDomain' })
+pack.addColumnFormat({ name: 'Pathname', formulaName: 'ParsePathname' })
+pack.addColumnFormat({ name: 'Email', formulaName: 'ParseEmail' })
 
 pack.addColumnFormat({
   name: 'Person',
@@ -204,7 +231,7 @@ pack.addSyncTable({
     parameters: [
       coda.makeParameter({
         name: 'collectionId',
-        type: coda.ParameterType.String,
+        type: pt.String,
         description: 'Id of the collection',
         autocomplete: async function (ctx, search) {
           const res = await withAttio(ctx.fetcher).listCollections()

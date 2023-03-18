@@ -1,8 +1,8 @@
 import URL from 'url-parse'
 import {
   buildUrl,
-  getDomain,
-  getPathname,
+  parseDomain,
+  parsePathname,
   splitName,
   zEmail,
   zEmailOrDomain,
@@ -16,8 +16,8 @@ test.each([
   ['attio.com', '/'],
   ['app.attio.com/test?adf=122', '/test'],
   ['tony@venice.is', '/'], // http:// gets added to prefix...
-])('getPathname(%o) -> %o', (input, output) => {
-  expect(getPathname(input)).toEqual(output)
+])('parsePathname(%o) -> %o', (input, output) => {
+  expect(parsePathname(input)).toEqual(output)
 })
 
 test.each([
@@ -29,8 +29,8 @@ test.each([
   ['attio.com', 'attio.com'],
   ['app.attio.com/test?adf=122', 'attio.com'],
   ['tony@venice.is', 'venice.is'], // http:// gets added to prefix...
-])('getDomain(%o) -> %o', (input, output) => {
-  expect(getDomain(input)).toEqual(output)
+])('parseDomain(%o) -> %o', (input, output) => {
+  expect(parseDomain(input)).toEqual(output)
 })
 
 test.each([

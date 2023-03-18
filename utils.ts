@@ -8,22 +8,20 @@ export const zUuid = z.string().uuid()
 
 /** Supports parsing email from RFC 5322 */
 export const zEmail = z.string().transform((str, ctx) => {
-  const parsed = addrs.parseOneAddress(str)
-  const mb = parsed?.type === 'mailbox' ? parsed : parsed?.addresses[0]
-  if (!mb) {
+  const ret = parseEmail(str)
+  if (!ret) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: `Invaild email based on RFC 5322 ${str}`,
     })
     return z.NEVER
   }
-  // TODO: Return name as well, first name / last name
-  return { name: mb.name, email: mb.address }
+  return ret
 })
 
 export const zDomain = z.string().transform((arg, ctx) => {
   try {
-    return getDomain(arg)
+    return parseDomain(arg)
   } catch (err) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -51,13 +49,24 @@ export const zEmailOrDomain = z.string().transform((arg) => {
 
 // We need the url-parse package because the native one is not availble in Coda pack runtime
 
-export function getPathname(urlString: string) {
-  const prefix = urlString.includes('://') ? '' : 'https://'
-  const url = new URL(prefix + urlString)
-  return url.pathname
+export function parseEmail(str: string) {
+  const parsed = addrs.parseOneAddress(str)
+  const mb = parsed?.type === 'mailbox' ? parsed : parsed?.addresses[0]
+  if (!mb) {
+    return
+  }
+  const [firstName, lastName] = splitName(mb.name)
+  // TODO: Return name as well, first name / last name
+  return {
+    email: mb.address,
+    name: mb.name,
+    firstName,
+    lastName,
+    display: mb.name || mb.address,
+  }
 }
 
-export function getDomain(urlString: string) {
+export function parseDomain(urlString: string) {
   const prefix = urlString.includes('://') ? '' : 'https://'
   const url = new URL(prefix + urlString)
   const parsed = psl.parse(url.hostname)
@@ -66,6 +75,12 @@ export function getDomain(urlString: string) {
   }
   // TODO: Use verror
   throw new Error(`${parsed.error?.code}: ${parsed.error?.message}`)
+}
+
+export function parsePathname(urlString: string) {
+  const prefix = urlString.includes('://') ? '' : 'https://'
+  const url = new URL(prefix + urlString)
+  return url.pathname
 }
 
 export function splitName(
