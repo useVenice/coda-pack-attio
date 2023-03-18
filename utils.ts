@@ -119,9 +119,17 @@ export function buildUrl(urlString: string, query: Record<string, unknown>) {
 export function renderTemplate(
   templateStr: string,
   variables: Record<string, unknown>,
+  options: { strict: boolean } = { strict: true },
 ) {
-  const template = Handlebars.compile(templateStr)
-  return template(variables)
+  const template = Handlebars.compile(templateStr, { ...options })
+  try {
+    return template(variables)
+  } catch (err) {
+    const msg = `${err}`
+    const regex = /(.+) not defined in \[object Object\] (.+)/
+    const [, prefix, suffix] = regex.exec(msg)
+    throw new Error(`${prefix} is missing in variables ${suffix}`)
+  }
 }
 
 /** Inspired by postgres jsonBuildObject */

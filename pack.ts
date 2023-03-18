@@ -32,11 +32,12 @@ pack.setUserAuthentication({
 const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) =>
   _withAttio({ ...opts, workspaceSlug: WORKSPACE_SLUG_HARDCODE })
 
-function ensureExists<T>(value: T, message: string) {
-  if (value != null) {
-    return value
+function wrapError<T>(fn: () => T) {
+  try {
+    return fn()
+  } catch (err) {
+    throw new coda.UserVisibleError(err.message)
   }
-  throw new coda.UserVisibleError(message)
 }
 
 // MARK: - Formulas
@@ -67,17 +68,24 @@ pack.addFormula({
       type: pt.String,
       description: 'Handlebars template',
     }),
-  ],
-  varargParameters: [
     coda.makeParameter({
-      type: coda.ParameterType.String,
+      type: pt.StringArray,
       name: 'keyValues',
       description: 'Key value pairs',
     }),
+    coda.makeParameter({
+      name: 'strict',
+      type: pt.Boolean,
+      optional: true,
+      description:
+        'Whether to ignore missing variables or throw error. Defaults to true',
+    }),
   ],
   resultType: t.String,
-  execute: ([templatStr, ...keyValues]) =>
-    renderTemplate(templatStr, jsonBuildObject(...keyValues)),
+  execute: ([templatStr, keyValues, strict = true]) =>
+    wrapError(() =>
+      renderTemplate(templatStr, jsonBuildObject(...keyValues), { strict }),
+    ),
 })
 
 pack.addFormula({

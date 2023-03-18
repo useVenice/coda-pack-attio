@@ -39,10 +39,14 @@ test.each([
 
 test.each([
   ['Hello {{name}}', { name: 'there' }, 'Hello there'],
-  ['Hello {{name}}', {}, 'Hello '],
+  ['Hello {{name}}', {}, undefined],
   ['Hello {{nested.name}}', { nested: { name: 'there' } }, 'Hello there'],
 ])('renderTemplate(%o, %o) -> %o', (templateStr, variables, output) => {
-  expect(renderTemplate(templateStr, variables)).toEqual(output)
+  try {
+    expect(renderTemplate(templateStr, variables)).toEqual(output)
+  } catch {
+    expect(undefined).toEqual(output)
+  }
 })
 
 test.each([
