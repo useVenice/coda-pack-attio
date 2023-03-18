@@ -1,5 +1,6 @@
 import URL from 'url-parse'
 import {
+  arrayToSentence,
   buildUrl,
   parseDomain,
   parseEmails,
@@ -32,6 +33,16 @@ test.each([
   ['tony@venice.is', 'venice.is'], // http:// gets added to prefix...
 ])('parseDomain(%o) -> %o', (input, output) => {
   expect(parseDomain(input)).toEqual(output)
+})
+
+test.each([
+  [[], ''],
+  [['John'], 'John'],
+  [['John', 'Adam'], 'John & Adam'],
+  [['John', 'Adam', 'Lucie'], 'John, Adam & Lucie'],
+  [['John', 'Adam', 'Lucie', 'Amy'], 'John, Adam, Lucie & Amy'],
+])('arrayToSentence(%j) -> %o', (input, output) => {
+  expect(arrayToSentence(input)).toEqual(output)
 })
 
 test.each([
@@ -68,7 +79,7 @@ test.each([
 ])('parseEmails(%o) -> %j', (input, output) => {
   const _res = zEmail.safeParse(input)
   const res = _res.success ? _res.data : undefined
-  expect(parseEmails(input).map((r) => [r.email, r.name])).toEqual(output)
+  expect(parseEmails(input).map((r) => [r.address, r.name])).toEqual(output)
 })
 
 test.each([
@@ -91,7 +102,7 @@ test.each([
 ])('zEmail(%o) -> [%o, %o]', (input, email, name) => {
   const _res = zEmail.safeParse(input)
   const res = _res.success ? _res.data : undefined
-  expect(res?.email).toEqual(email)
+  expect(res?.address).toEqual(email)
   expect(res?.name).toEqual(name)
 })
 

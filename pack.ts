@@ -2,8 +2,9 @@ import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
 import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
 import {
+  arrayToSentence,
   parseDomain,
-  parseEmail,
+  parseEmails,
   parsePathname,
   splitName,
   zEmail,
@@ -37,23 +38,37 @@ function ensureExists<T>(value: T, message: string) {
 }
 
 // MARK: - Formulas
-
 pack.addFormula({
-  name: 'ParseEmail',
-  description: 'Parse RFC 5322 email',
+  name: 'ArrayToSentence',
+  description: '@see https://github.com/shinnn/array-to-sentence',
   connectionRequirement: coda.ConnectionRequirement.None,
   parameters: [
     coda.makeParameter({
-      name: 'email',
-      type: pt.String,
-      description: 'e.g. Bart Adams <bar@adams.com>',
+      name: 'values',
+      type: pt.StringArray,
+      description: '',
     }),
   ],
-  resultType: t.Object,
-  schema: coda.makeObjectSchema({
+  resultType: t.String,
+  execute: ([values]) => arrayToSentence(values),
+})
+
+pack.addFormula({
+  name: 'ParseEmails',
+  description: 'Parse RFC 5322 email addresses',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [
+    coda.makeParameter({
+      name: 'emails',
+      type: pt.String,
+      description: 'e.g. Bart Adams <bar@adams.com>, bill@gates.com',
+    }),
+  ],
+  resultType: t.Array,
+  items: coda.makeObjectSchema({
     properties: {
-      input: { type: t.String },
-      email: {
+      email: { type: t.String, description: 'Parsed tokens' },
+      address: {
         type: t.String,
         codaType: ht.Email,
       },
@@ -61,10 +76,9 @@ pack.addFormula({
       firstName: { type: t.String },
       lastName: { type: t.String },
     },
-    displayProperty: 'input',
+    displayProperty: 'email',
   }),
-  execute: ([email]) =>
-    ensureExists(parseEmail(email), `${email} is not a valid email`),
+  execute: ([emails]) => parseEmails(emails),
 })
 
 pack.addFormula({
@@ -126,7 +140,7 @@ pack.addFormula({
 
     return attio
       .assertPerson({
-        email_addresses: [email.data.email],
+        email_addresses: [email.data.address],
         ...(updateName && { first_name, last_name }),
       })
       .then((res) => ({
@@ -192,7 +206,7 @@ pack.addFormula({
 
 pack.addColumnFormat({ name: 'Domain', formulaName: 'ParseDomain' })
 pack.addColumnFormat({ name: 'Pathname', formulaName: 'ParsePathname' })
-pack.addColumnFormat({ name: 'Email', formulaName: 'ParseEmail' })
+pack.addColumnFormat({ name: 'Emails', formulaName: 'ParseEmails' })
 
 pack.addColumnFormat({
   name: 'Person',

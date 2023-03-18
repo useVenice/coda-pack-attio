@@ -36,7 +36,7 @@ export const zEmailOrDomain = z.string().transform((arg) => {
   if (emailRes.success) {
     return {
       type: 'email' as const,
-      value: emailRes.data.email,
+      value: emailRes.data.address,
       name: emailRes.data.name,
     }
   }
@@ -54,13 +54,16 @@ export function parseEmail(str: string) {
 }
 
 export function parseEmails(str: string) {
-  return (addrs.parseAddressList(str) ?? [])
+  let res = addrs.parseAddressList({ input: str, simple: false })
+  res = (res as any)?.addresses // Type here is wrong when simple: false https://share.cleanshot.com/gfdJBR3w
+  return (res ?? [])
     .flatMap((p) => (p.type === 'mailbox' ? [p] : p.addresses))
     .map((mb) => {
       const [firstName, lastName] = splitName(mb.name)
       return {
-        input: str,
-        email: mb.address,
+        // https://github.com/jackbearheart/email-addresses/issues/62
+        email: mb.node.tokens.trim(),
+        address: mb.address,
         name: mb.name,
         firstName,
         lastName,
@@ -91,6 +94,18 @@ export function splitName(
   // Omitting empty string
   const [firstName, ...rest] = (name ?? '').split(' ').filter((p) => !!p)
   return [firstName, rest.length ? rest.join(' ') : undefined]
+}
+
+export function arrayToSentence(
+  parts: string[],
+  {
+    separator = ',',
+    lastSeparator = '&',
+  }: { separator?: string; lastSeparator?: string } = {},
+) {
+  const firstPart = parts.slice(0, parts.length - 2)
+  const last2 = parts.slice(parts.length - 2)
+  return [...firstPart, last2.join(` ${lastSeparator} `)].join(`${separator} `)
 }
 
 export function buildUrl(urlString: string, query: Record<string, unknown>) {
