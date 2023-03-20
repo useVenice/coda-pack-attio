@@ -3,6 +3,22 @@ import * as coda from '@codahq/packs-sdk'
 const t = coda.ValueType
 const ht = coda.ValueHintType
 
+export const parsedEmailSchema = coda.makeObjectSchema({
+  properties: {
+    display: { type: t.String, description: 'Name <address> in full' },
+    address: {
+      type: t.String,
+      codaType: ht.Email,
+    },
+    name: { type: t.String },
+    firstName: { type: t.String },
+    lastName: { type: t.String },
+  },
+  displayProperty: 'display',
+})
+
+// ---
+
 export const collectionSchema = coda.makeObjectSchema({
   properties: {
     collection_id: { type: t.String, fromKey: 'id' },
@@ -88,16 +104,7 @@ export const recordSchema = coda.makeObjectSchema({
     person: personSchema,
     company: companySchema,
     /** Optional metadata */
-    meta: coda.makeObjectSchema({
-      properties: {
-        // input: { type: t.String }, // Add me when we have time to refactor
-        // RFC 5322 data
-        name: { type: t.String },
-        first_name: { type: t.String },
-        last_name: { type: t.String },
-      },
-      displayProperty: 'name',
-    }),
+    meta: parsedEmailSchema,
   },
   displayProperty: 'display_name',
   idProperty: 'record_id',

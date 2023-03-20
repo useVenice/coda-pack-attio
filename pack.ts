@@ -1,10 +1,16 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
-import { collectionSchema, entrySchema, recordSchema } from './coda-schemas'
+import {
+  collectionSchema,
+  entrySchema,
+  parsedEmailSchema,
+  recordSchema,
+} from './coda-schemas'
 import {
   arrayToSentence,
   jsonBuildObject,
   parseDomain,
+  parseEmail,
   parseEmails,
   parsePathname,
   renderTemplate,
@@ -104,6 +110,22 @@ pack.addFormula({
 })
 
 pack.addFormula({
+  name: 'ParseEmail',
+  description: 'Parse RFC 5322 email address',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [
+    coda.makeParameter({
+      name: 'email',
+      type: pt.String,
+      description: 'e.g. Bart Adams <bar@adams.com>, bill@gates.com',
+    }),
+  ],
+  resultType: t.Object,
+  schema: parsedEmailSchema,
+  execute: ([email]) => parseEmail(email),
+})
+
+pack.addFormula({
   name: 'ParseEmails',
   description: 'Parse RFC 5322 email addresses',
   connectionRequirement: coda.ConnectionRequirement.None,
@@ -115,19 +137,7 @@ pack.addFormula({
     }),
   ],
   resultType: t.Array,
-  items: coda.makeObjectSchema({
-    properties: {
-      display: { type: t.String, description: 'Name <address> in full' },
-      address: {
-        type: t.String,
-        codaType: ht.Email,
-      },
-      name: { type: t.String },
-      firstName: { type: t.String },
-      lastName: { type: t.String },
-    },
-    displayProperty: 'display',
-  }),
+  items: parsedEmailSchema,
   execute: ([emails]) => parseEmails(emails),
 })
 
@@ -195,7 +205,7 @@ pack.addFormula({
       })
       .then((res) => ({
         ...res,
-        meta: { name: email.data.name, first_name, last_name },
+        meta: email.data,
       }))
   },
 })
@@ -257,6 +267,7 @@ pack.addFormula({
 pack.addColumnFormat({ name: 'Domain', formulaName: 'ParseDomain' })
 pack.addColumnFormat({ name: 'Pathname', formulaName: 'ParsePathname' })
 pack.addColumnFormat({ name: 'Emails', formulaName: 'ParseEmails' })
+pack.addColumnFormat({ name: 'Email', formulaName: 'ParseEmail' })
 
 pack.addColumnFormat({
   name: 'Person',
