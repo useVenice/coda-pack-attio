@@ -61,6 +61,57 @@ export const roleSchema = coda.makeObjectSchema({
   identity: { name: 'Role' },
 })
 
+export const userSchema = coda.makeObjectSchema({
+  properties: {
+    id: { type: t.String },
+    first_name: { type: t.String },
+    last_name: { type: t.String },
+    avatar_url: { type: t.String, codaType: ht.Url },
+    email_address: { type: t.String, codaType: ht.Email },
+    is_admin: { type: t.Boolean },
+    is_suspended: { type: t.Boolean },
+  },
+  displayProperty: 'email_address',
+  idProperty: 'id',
+})
+
+export const communicationIntelligence = coda.makeObjectSchema({
+  properties: {
+    last_contacted_at: { type: t.String, codaType: ht.DateTime },
+    last_contacted_by: userSchema,
+    strongest_connection_strength: { type: t.String }, // "STRONG",
+    strongest_connection_user: userSchema,
+  },
+})
+
+export const socialMediaEntry = coda.makeObjectSchema({
+  properties: {
+    handle: { type: t.String },
+    url: { type: t.String, codaType: ht.Url },
+  },
+  displayProperty: 'handle',
+  idProperty: 'url',
+})
+
+export const socialMedia = coda.makeObjectSchema({
+  properties: {
+    twitter: socialMediaEntry,
+    linkedin: socialMediaEntry,
+    facebook: socialMediaEntry,
+    angellist: socialMediaEntry,
+    instagram: socialMediaEntry,
+  },
+})
+
+export const primaryLocattion = coda.makeObjectSchema({
+  properties: {
+    city: { type: t.String },
+    state: { type: t.String },
+    country_code: { type: t.String },
+    country_name: { type: t.String },
+  },
+})
+
 export const personSchema = coda.makeObjectSchema({
   properties: {
     person_id: { type: t.String, fromKey: 'id' },
@@ -74,6 +125,9 @@ export const personSchema = coda.makeObjectSchema({
     avatar_url: { type: t.String, codaType: ht.ImageAttachment },
     description: { type: t.String },
     roles: { type: t.Array, items: roleSchema },
+    communication_intelligence: communicationIntelligence,
+    social_media: socialMedia,
+    primary_location: primaryLocattion,
   },
   // https://community.coda.io/t/unable-to-use-zod-in-coda-packs-e-this-issues-this-issues-e-could-not-be-cloned/38378/2
   displayProperty: 'first_name', // Name does not exist unless we fix the transform...
@@ -89,6 +143,9 @@ export const companySchema = coda.makeObjectSchema({
     logo_url: { type: t.String, codaType: ht.ImageAttachment },
     description: { type: t.String },
     roles: { type: t.Array, items: roleSchema },
+    communication_intelligence: communicationIntelligence,
+    social_media: socialMedia,
+    primary_location: primaryLocattion
   },
   displayProperty: 'name',
   idProperty: 'company_id',

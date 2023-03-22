@@ -41,6 +41,9 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     description: z.string().nullable(),
     email_addresses: z.array(z.string()),
     roles: z.array(role),
+    communication_intelligence: z.record(z.unknown()),
+    social_media: z.record(z.unknown()),
+    primary_location: z.record(z.unknown()),
   })
 
   const company = recordBase.extend({
@@ -50,6 +53,9 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     description: z.string().nullable(),
     domains: z.array(z.string()),
     roles: z.array(role),
+    communication_intelligence: z.record(z.unknown()),
+    social_media: z.record(z.unknown()),
+    primary_location: z.record(z.unknown()),
   })
 
   const record = z.discriminatedUnion('contact_type', [person, company])
