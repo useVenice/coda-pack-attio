@@ -49,13 +49,50 @@ function wrapError<T>(fn: () => T) {
 // MARK: - Formulas
 
 pack.addFormula({
+  name: 'TestAutosuggest',
+  description: 'Create json (returns as string) from key value paris',
+  connectionRequirement: coda.ConnectionRequirement.None,
+  parameters: [
+    coda.makeParameter({
+      type: pt.String,
+      name: 'collectionId',
+      description: '',
+      autocomplete: ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7'],
+    }),
+  ],
+  resultType: t.String,
+  execute: ([collectionId]) => collectionId,
+})
+
+pack.addFormula({
+  name: 'TestAutosuggestAsync',
+  description: 'Create json (returns as string) from key value paris',
+  parameters: [
+    coda.makeParameter({
+      type: pt.String,
+      name: 'collectionId',
+      description: '',
+      autocomplete: async function (ctx, search) {
+        const res = await withAttio(ctx.fetcher).listCollections()
+        return coda.autocompleteSearchObjects(search, res, 'name', 'id')
+      },
+    }),
+  ],
+  resultType: t.String,
+  execute: ([collectionId]) => collectionId,
+})
+
+pack.addColumnFormat({ name: 'TestAutosuggest', formulaName: 'TestAutosuggest' })
+pack.addColumnFormat({ name: 'TestAutosuggestAsync', formulaName: 'TestAutosuggestAsync' })
+
+pack.addFormula({
   name: 'JsonBuildObject',
   description: 'Create json (returns as string) from key value paris',
   connectionRequirement: coda.ConnectionRequirement.None,
   parameters: [],
   varargParameters: [
     coda.makeParameter({
-      type: coda.ParameterType.String,
+      type: pt.String,
       name: 'keyValues',
       description: 'Key value pairs',
     }),
