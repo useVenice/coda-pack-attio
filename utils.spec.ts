@@ -70,6 +70,7 @@ test.each([
   ['attio.com', 'attio.com'],
   ['app.attio.com/test?adf=122', 'attio.com'],
   ['tony@venice.is', 'venice.is'], // http:// gets added to prefix...
+  ['Hi Venice <hi@venice.is>', 'venice.is'],
 ])('parseDomain(%o) -> %o', (input, output) => {
   expect(parseDomain(input)).toEqual(output)
 })

@@ -67,15 +67,21 @@ export function parseEmails(str: string) {
         display: mb.node.tokens.trim(),
         address: mb.address,
         name: mb.name,
+        domain: mb.domain,
         firstName,
         lastName,
       }
     })
 }
 
-export function parseDomain(urlString: string) {
-  const prefix = urlString.includes('://') ? '' : 'https://'
-  const url = new URL(prefix + urlString)
+/** Supports parsing domain from RFC5322 email address, and both with + without protocol  */
+export function parseDomain(input: string) {
+  let email = parseEmail(input)
+  if (email) {
+    return parseDomain(email.domain)
+  }
+  const prefix = input.includes('://') ? '' : 'https://'
+  const url = new URL(prefix + input)
   const parsed = psl.parse(url.hostname)
   if ('domain' in parsed && parsed.domain) {
     return parsed.domain

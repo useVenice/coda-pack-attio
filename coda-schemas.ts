@@ -13,6 +13,7 @@ export const parsedEmailSchema = coda.makeObjectSchema({
     name: { type: t.String },
     firstName: { type: t.String },
     lastName: { type: t.String },
+    domain: { type: t.String },
   },
   displayProperty: 'display',
 })
@@ -145,7 +146,7 @@ export const companySchema = coda.makeObjectSchema({
     roles: { type: t.Array, items: roleSchema },
     communication_intelligence: communicationIntelligence,
     social_media: socialMedia,
-    primary_location: primaryLocattion
+    primary_location: primaryLocattion,
   },
   displayProperty: 'name',
   idProperty: 'company_id',
