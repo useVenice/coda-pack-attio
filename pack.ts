@@ -61,20 +61,41 @@ pack.setUserAuthentication({
 
 const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) => {
   const attio = _withAttio({ ...opts, workspaceSlug: WORKSPACE_SLUG_HARDCODE })
+  const assertRecord = async (emailOrDomain: string) => {
+    const parsed = zEmailOrDomain.parse(emailOrDomain)
+    if (parsed.type === 'email') {
+      return await attio.assertPerson({
+        email_addresses: [parsed.value],
+      })
+    } else if (parsed.type === 'domain') {
+      return await attio.assertCompany({
+        domains: [parsed.value],
+      })
+    }
+  }
+  const addRecordToCollection = async (input: {
+    emailOrDomain: string
+    collectionId: string
+    allowDuplicate?: boolean
+  }) => {
+    const record = await assertRecord(input.emailOrDomain)
+    const entries =
+      record.record_type === 'company'
+        ? record.company.entries
+        : record.person.entries
+    const entry = entries[input.collectionId]?.[0]
+    if (entry && !input.allowDuplicate) {
+      return entry
+    }
+    return attio.createCollectionEntry(
+      input.collectionId,
+      R.pick(record, ['record_type', 'record_id']),
+    )
+  }
   return {
     ...attio,
-    assertRecord: async (emailOrDomain: string) => {
-      const parsed = zEmailOrDomain.parse(emailOrDomain)
-      if (parsed.type === 'email') {
-        return await attio.assertPerson({
-          email_addresses: [parsed.value],
-        })
-      } else if (parsed.type === 'domain') {
-        return await attio.assertCompany({
-          domains: [parsed.value],
-        })
-      }
-    },
+    assertRecord,
+    addRecordToCollection,
   }
 }
 
@@ -295,24 +316,41 @@ pack.addFormula({
   resultType: t.Object,
   schema: entrySchema,
   execute: async function ([emailOrDomain, collectionId], ctx) {
-    const attio = withAttio(ctx.fetcher)
-    const record = await attio.assertRecord(emailOrDomain)
-    const entries =
-      record.record_type === 'company'
-        ? record.company.entries
-        : record.person.entries
-    const entry = entries[collectionId]?.[0]
-    if (entry) {
-      return entry
-    }
-    return attio.createCollectionEntry(
+    return withAttio(ctx.fetcher).addRecordToCollection({
       collectionId,
-      R.pick(record, ['record_type', 'record_id']),
-    )
+      emailOrDomain,
+      allowDuplicate: false,
+    })
   },
 })
 
 // MARK: - Actions
+
+pack.addFormula({
+  name: 'AddCollectionEntry',
+  description:
+    'Creating record if needed, then get/create a new entry to the collection',
+  parameters: [
+    params.collectionId,
+    params.emailOrDomain,
+    coda.makeParameter({
+      name: 'allowDuplicate',
+      type: pt.Boolean,
+      optional: true,
+      description: 'If true would allow multiple entry for the same record',
+    }),
+  ],
+  isAction: true,
+  resultType: t.Object,
+  schema: entrySchema,
+  execute: async function ([collectionId, emailOrDomain, allowDuplicate], ctx) {
+    return withAttio(ctx.fetcher).addRecordToCollection({
+      collectionId,
+      emailOrDomain,
+      allowDuplicate,
+    })
+  },
+})
 
 pack.addFormula({
   name: 'DeleteCollectionEntry',
