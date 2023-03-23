@@ -74,5 +74,17 @@ export function withAttio(opts: {
           record: schemas.transformRecord(entry.record),
         })),
       })),
+    createCollectionEntry: (
+      collectionId: string,
+      body: { record_type: 'person' | 'company'; record_id: string },
+    ) =>
+      jsonHttp(
+        'POST',
+        `https://api.attio.com/v1/collections/${collectionId}/entries`,
+        body,
+      ).then((entry: z.infer<typeof schemas.entry>) => ({
+        ...entry,
+        record: schemas.transformRecord(entry.record),
+      })),
   }
 }

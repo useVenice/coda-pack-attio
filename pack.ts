@@ -13,6 +13,7 @@ import {
   parseEmail,
   parseEmails,
   parsePathname,
+  R,
   renderTemplate,
   splitName,
   zEmail,
@@ -26,6 +27,23 @@ const t = coda.ValueType
 const ht = coda.ValueHintType
 const pt = coda.ParameterType
 
+const params = {
+  collectionId: coda.makeParameter({
+    type: pt.String,
+    name: 'collectionId',
+    description: '',
+    autocomplete: async function (ctx, search) {
+      const res = await withAttio(ctx.fetcher).listCollections()
+      return coda.autocompleteSearchObjects(search, res, 'name', 'id')
+    },
+  }),
+  emailOrDomain: coda.makeParameter({
+    name: 'emailOrDomain',
+    type: pt.String,
+    description: '',
+  }),
+}
+
 /** TODO: This should be provided by the user */
 const WORKSPACE_SLUG_HARDCODE = 'venice'
 
@@ -35,8 +53,24 @@ pack.setUserAuthentication({
   type: coda.AuthenticationType.HeaderBearerToken,
 })
 
-const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) =>
-  _withAttio({ ...opts, workspaceSlug: WORKSPACE_SLUG_HARDCODE })
+const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) => {
+  const attio = _withAttio({ ...opts, workspaceSlug: WORKSPACE_SLUG_HARDCODE })
+  return {
+    ...attio,
+    assertRecord: async (emailOrDomain: string) => {
+      const parsed = zEmailOrDomain.parse(emailOrDomain)
+      if (parsed.type === 'email') {
+        return await attio.assertPerson({
+          email_addresses: [parsed.value],
+        })
+      } else if (parsed.type === 'domain') {
+        return await attio.assertCompany({
+          domains: [parsed.value],
+        })
+      }
+    },
+  }
+}
 
 function wrapError<T>(fn: () => T) {
   try {
@@ -47,8 +81,6 @@ function wrapError<T>(fn: () => T) {
 }
 
 // MARK: - Formulas
-
-
 
 pack.addFormula({
   name: 'JsonBuildObject',
@@ -240,27 +272,40 @@ pack.addFormula({
   name: 'AssertRecord',
   description:
     'Get or create the person (based on email) or company (based on domain)',
-  parameters: [
-    coda.makeParameter({
-      name: 'emailOrDomain',
-      type: pt.String,
-      description: '',
-    }),
-  ],
+  parameters: [params.emailOrDomain],
   resultType: t.Object,
   schema: recordSchema,
-  execute: async function ([emailOrDomain], ctx) {
-    const parsed = zEmailOrDomain.parse(emailOrDomain)
-    if (parsed.type === 'email') {
-      return await withAttio(ctx.fetcher).assertPerson({
-        email_addresses: [parsed.value],
-      })
-    } else if (parsed.type === 'domain') {
-      return await withAttio(ctx.fetcher).assertCompany({
-        domains: [parsed.value],
-      })
+  execute: function ([emailOrDomain], ctx) {
+    return withAttio(ctx.fetcher).assertRecord(emailOrDomain)
+  },
+})
+
+// MARK: - Actions
+
+pack.addFormula({
+  name: 'AddToCollection',
+  description:
+    'Add record to a collection, creating the record if needed, return existing entry if found',
+  isAction: true,
+  parameters: [params.collectionId, params.emailOrDomain],
+  // would be nice to support adding param for unique as well as adding by record id rather than email / domain
+  resultType: t.Object,
+  schema: entrySchema,
+  execute: async function ([collectionId, emailOrDomain], ctx) {
+    const attio = withAttio(ctx.fetcher)
+    const record = await attio.assertRecord(emailOrDomain)
+    const entries =
+      record.record_type === 'company'
+        ? record.company.entries
+        : record.person.entries
+    const entry = entries[collectionId]?.[0]
+    if (entry) {
+      return entry
     }
-    return null
+    return attio.createCollectionEntry(
+      collectionId,
+      R.pick(record, ['record_type', 'record_id']),
+    )
   },
 })
 
@@ -312,17 +357,7 @@ pack.addSyncTable({
   formula: {
     name: 'SyncRecords',
     description: '',
-    parameters: [
-      coda.makeParameter({
-        name: 'collectionId',
-        type: pt.String,
-        description: 'Id of the collection',
-        autocomplete: async function (ctx, search) {
-          const res = await withAttio(ctx.fetcher).listCollections()
-          return coda.autocompleteSearchObjects(search, res, 'name', 'id')
-        },
-      }),
-    ],
+    parameters: [params.collectionId],
     // Would be nice to dedupe wih CollectionEntries table
     execute: async function ([collectionId], ctx) {
       const offset = Number.parseInt(

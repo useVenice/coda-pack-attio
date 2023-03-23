@@ -8,12 +8,6 @@ function joinName(person: { first_name?: string; last_name?: string }) {
 // MARK: - Zod schemas
 
 export function makeZodSchemas(opts: { workspaceSlug: string }) {
-  const recordBase = z.object({
-    id: z.string().uuid(),
-    created_at: z.string().datetime(),
-    contact_type: z.enum(['person', 'company']),
-  })
-
   const role = z.object({
     id: z.string(),
     title: z.string().nullable(),
@@ -33,29 +27,36 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
       .transform((person) => ({ ...person, name: joinName(person) })),
   })
 
-  const person = recordBase.extend({
-    contact_type: z.literal('person'),
-    first_name: z.string().nullable(),
-    last_name: z.string().nullable(),
-    avatar_url: z.string().url().nullable(),
+  const recordBase = z.object({
+    id: z.string().uuid(),
+    created_at: z.string().datetime(),
+    contact_type: z.enum(['person', 'company']),
+    /** $collectionId => [{id: $entryId, collection_id: $collectionId}] */
+    entries: z.record(
+      z.array(
+        z.object({ id: z.string().uuid(), collection_id: z.string().uuid() }),
+      ),
+    ),
     description: z.string().nullable(),
-    email_addresses: z.array(z.string()),
     roles: z.array(role),
     communication_intelligence: z.record(z.unknown()),
     social_media: z.record(z.unknown()),
     primary_location: z.record(z.unknown()),
   })
 
+  const person = recordBase.extend({
+    contact_type: z.literal('person'),
+    first_name: z.string().nullable(),
+    last_name: z.string().nullable(),
+    avatar_url: z.string().url().nullable(),
+    email_addresses: z.array(z.string()),
+  })
+
   const company = recordBase.extend({
     contact_type: z.literal('company'),
     name: z.string(),
     logo_url: z.string().url().nullable(),
-    description: z.string().nullable(),
     domains: z.array(z.string()),
-    roles: z.array(role),
-    communication_intelligence: z.record(z.unknown()),
-    social_media: z.record(z.unknown()),
-    primary_location: z.record(z.unknown()),
   })
 
   const record = z.discriminatedUnion('contact_type', [person, company])
