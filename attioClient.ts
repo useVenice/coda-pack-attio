@@ -11,13 +11,13 @@ export function withAttio(opts: {
     next_page_offset: z.number().nullable(),
     data: z.array(schemas.entry),
   })
-  function jsonHttp(
+  function jsonHttp<T = any>(
     method: Parameters<typeof opts['fetch']>[0]['method'],
     url: string,
     body?: Record<string, unknown>,
   ) {
     return opts
-      .fetch({
+      .fetch<T>({
         method,
         url,
         headers: { 'content-type': 'application/json' },
@@ -86,5 +86,10 @@ export function withAttio(opts: {
         ...entry,
         record: schemas.transformRecord(entry.record),
       })),
+    deleteCollectionEntry: (collectionId: string, entryId: string) =>
+      jsonHttp<{}>(
+        'DELETE',
+        `https://api.attio.com/v1/collections/${collectionId}/entries/${entryId}`,
+      ),
   }
 }

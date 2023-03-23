@@ -37,6 +37,12 @@ const params = {
       return coda.autocompleteSearchObjects(search, res, 'name', 'id')
     },
   }),
+  entryId: coda.makeParameter({
+    name: 'entryId',
+    type: pt.String,
+    description: 'Collection entry id',
+    // Can add autocomplete to based on collection id
+  }),
   emailOrDomain: coda.makeParameter({
     name: 'emailOrDomain',
     type: pt.String,
@@ -280,18 +286,15 @@ pack.addFormula({
   },
 })
 
-// MARK: - Actions
-
 pack.addFormula({
-  name: 'AddToCollection',
+  name: 'AssertCollectionEntry',
   description:
-    'Add record to a collection, creating the record if needed, return existing entry if found',
-  isAction: true,
-  parameters: [params.collectionId, params.emailOrDomain],
+    'Assert record in collection by creating record if needed, then ensure it is in the given collection',
+  parameters: [params.emailOrDomain, params.collectionId],
   // would be nice to support adding param for unique as well as adding by record id rather than email / domain
   resultType: t.Object,
   schema: entrySchema,
-  execute: async function ([collectionId, emailOrDomain], ctx) {
+  execute: async function ([emailOrDomain, collectionId], ctx) {
     const attio = withAttio(ctx.fetcher)
     const record = await attio.assertRecord(emailOrDomain)
     const entries =
@@ -306,6 +309,22 @@ pack.addFormula({
       collectionId,
       R.pick(record, ['record_type', 'record_id']),
     )
+  },
+})
+
+// MARK: - Actions
+
+pack.addFormula({
+  name: 'DeleteCollectionEntry',
+  description: 'Remove entry from collection',
+  isAction: true,
+  parameters: [params.collectionId, params.entryId],
+  // would be nice to support adding param for unique as well as adding by record id rather than email / domain
+  resultType: t.Boolean,
+  execute: async function ([collectionId, entryId], ctx) {
+    const attio = withAttio(ctx.fetcher)
+    await attio.deleteCollectionEntry(collectionId, entryId)
+    return true
   },
 })
 
