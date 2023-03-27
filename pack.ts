@@ -85,7 +85,8 @@ const withAttio = (opts: Pick<Parameters<typeof _withAttio>[0], 'fetch'>) => {
         : record.person.entries
     const entry = entries[input.collectionId]?.[0]
     if (entry && !input.allowDuplicate) {
-      return entry
+      // Still missing entry.collection but not used for now...
+      return { ...entry, record }
     }
     return attio.createCollectionEntry(
       input.collectionId,
