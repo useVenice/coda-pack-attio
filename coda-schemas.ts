@@ -13,7 +13,7 @@ export const parsedEmailSchema = coda.makeObjectSchema({
     name: { type: t.String },
     firstName: { type: t.String },
     lastName: { type: t.String },
-    domain: { type: t.String },
+    domain: { type: t.String, codaType: ht.Url },
   },
   displayProperty: 'display',
 })
@@ -121,7 +121,7 @@ export const personSchema = coda.makeObjectSchema({
     last_name: { type: t.String },
     email_addresses: {
       type: t.Array,
-      items: coda.makeSchema({ type: t.String }),
+      items: coda.makeSchema({ type: t.String, codaType: ht.Email }),
     },
     avatar_url: { type: t.String, codaType: ht.ImageAttachment },
     description: { type: t.String },
@@ -140,7 +140,10 @@ export const companySchema = coda.makeObjectSchema({
   properties: {
     company_id: { type: t.String, fromKey: 'id' },
     name: { type: t.String },
-    domains: { type: t.Array, items: coda.makeSchema({ type: t.String }) },
+    domains: {
+      type: t.Array,
+      items: coda.makeSchema({ type: t.String, codaType: ht.Url }),
+    },
     logo_url: { type: t.String, codaType: ht.ImageAttachment },
     description: { type: t.String },
     roles: { type: t.Array, items: roleSchema },
