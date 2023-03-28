@@ -107,5 +107,45 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     attributes: z.record(z.unknown()),
   })
 
-  return { person, company, record, collection, entry, transformRecord }
+  const v2Attribute = z.object({
+    id: z.object({
+      workspace_id: z.string(),
+      object_id: z.string(),
+      attribute_id: z.string(),
+    }),
+    title: z.string(),
+    description: z.string().nullish(),
+    api_slug: z.string(),
+    type: z.enum([
+      // https://share.cleanshot.com/kfYP1xDl
+      'text',
+      'number',
+      'checkbox',
+      'currency',
+      'date',
+      'timestamp',
+      'rating',
+      'status',
+      'select',
+      'record-reference',
+      'actor-reference',
+      'location',
+      'domain',
+      'email-address',
+      'phone-number',
+      'interaction',
+      'personal-name',
+    ]),
+    is_system_attribute: z.boolean(),
+    is_required: z.boolean(),
+    is_unique: z.boolean(),
+    is_multiselect: z.boolean(),
+    is_default_value_enabled: z.boolean(),
+    is_archived: z.boolean(),
+    created_at: z.string(),
+    default_value: z.any(),
+    config: z.any(),
+  })
+
+  return { person, company, record, collection, entry, transformRecord , v2Attribute}
 }

@@ -1,6 +1,7 @@
 import * as coda from '@codahq/packs-sdk'
 import { withAttio as _withAttio } from './attioClient'
 import {
+  attributeSchema,
   collectionSchema,
   entrySchema,
   parsedEmailSchema,
@@ -477,6 +478,51 @@ pack.addDynamicSyncTable({
       const res = await withAttio(ctx.fetcher).listCollectionEntries(
         collectionId,
         { offset },
+      )
+      return {
+        result: res.data as any[],
+        continuation: res.next_page_offset
+          ? { offset: res.next_page_offset }
+          : undefined,
+      }
+    },
+  },
+})
+
+pack.addDynamicSyncTable({
+  name: 'CollectionAttributes',
+  identityName: 'Attribute',
+  listDynamicUrls: async function (ctx) {
+    const res = await withAttio(ctx.fetcher).listCollections()
+    return res.map((col) => ({ display: col.name, value: col.id }))
+  },
+  getName: async function (ctx) {
+    const res = await withAttio(ctx.fetcher).listCollections()
+    return (
+      (res.find((col) => col.id === ctx.sync.dynamicUrl)?.name ||
+        ctx.sync.dynamicUrl) + ' attributes'
+    )
+  },
+  getSchema: async function (_ctx) {
+    return attributeSchema
+  },
+  getDisplayUrl: async function (ctx) {
+    return ctx.sync.dynamicUrl!
+  },
+  formula: {
+    name: 'SyncCollectionAttributes',
+    description: '',
+    parameters: [],
+    execute: async function ([], ctx) {
+      const collectionId = ctx.sync.dynamicUrl
+
+      const offset = Number.parseInt(
+        `${ctx.sync.continuation?.['offset'] ?? 0}`,
+      )
+
+      const res = await withAttio(ctx.fetcher).listCollectionAttributes(
+        collectionId,
+        { offset, show_archived: true },
       )
       return {
         result: res.data as any[],

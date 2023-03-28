@@ -186,3 +186,24 @@ export const entrySchema = coda.makeObjectSchema({
   idProperty: 'entry_id',
   identity: { name: 'Entry' },
 })
+
+export const attributeSchema = coda.makeObjectSchema({
+  properties: {
+    attribute_id: { type: t.String },
+    object_id: { type: t.String, description: 'e.g. Collection Id, due to collections being objects in v2' },
+    title: { type: t.String },
+    description: { type: t.String },
+    api_slug: { type: t.String },
+    type: { type: t.String },
+    is_system_attribute: { type: t.Boolean },
+    is_required: { type: t.Boolean },
+    is_unique: { type: t.Boolean },
+    is_multiselect: { type: t.Boolean },
+    is_default_value_enabled: { type: t.Boolean },
+    is_archived: { type: t.Boolean },
+    created_at: { type: t.String, codaType: ht.DateTime },
+  },
+  displayProperty: 'title',
+  idProperty: 'attribute_id',
+  identity: { name: 'Attribute' },
+})

@@ -11,6 +11,10 @@ export function withAttio(opts: {
     next_page_offset: z.number().nullable(),
     data: z.array(schemas.entry),
   })
+  const zListCollectionAttributesResponse = z.object({
+    next_page_offset: z.number().nullable(),
+    data: z.array(schemas.v2Attribute),
+  })
   function jsonHttp<T = any>(
     method: Parameters<typeof opts['fetch']>[0]['method'],
     url: string,
@@ -59,15 +63,18 @@ export function withAttio(opts: {
       ),
     listCollectionEntries: (
       collectionId: string,
-      { limit = 100, offset = 0 }: { limit?: number; offset?: number },
+      {
+        limit = DEFAULT_LIMIT,
+        offset = 0,
+      }: { limit?: number; offset?: number },
     ) =>
-      jsonHttp(
+      jsonHttp<z.infer<typeof zListCollectionEntriesResponse>>(
         'GET',
         buildUrl(
           `https://api.attio.com/v1/collections/${collectionId}/entries`,
           { limit, offset },
         ),
-      ).then((res: z.infer<typeof zListCollectionEntriesResponse>) => ({
+      ).then((res) => ({
         ...res,
         data: res.data.map((entry) => ({
           ...entry,
@@ -78,11 +85,11 @@ export function withAttio(opts: {
       collectionId: string,
       body: { record_type: 'person' | 'company'; record_id: string },
     ) =>
-      jsonHttp(
+      jsonHttp<z.infer<typeof schemas.entry>>(
         'POST',
         `https://api.attio.com/v1/collections/${collectionId}/entries`,
         body,
-      ).then((entry: z.infer<typeof schemas.entry>) => ({
+      ).then((entry) => ({
         ...entry,
         record: schemas.transformRecord(entry.record),
       })),
@@ -91,5 +98,30 @@ export function withAttio(opts: {
         'DELETE',
         `https://api.attio.com/v1/collections/${collectionId}/entries/${entryId}`,
       ),
+    listCollectionAttributes: (
+      collectionId: string,
+      {
+        limit = DEFAULT_LIMIT,
+        offset = 0,
+        show_archived,
+      }: { limit?: number; offset?: number; show_archived?: boolean },
+    ) =>
+      jsonHttp<z.infer<typeof zListCollectionAttributesResponse>>(
+        'GET',
+        buildUrl(`https://api.attio.com/v2/lists/${collectionId}/attributes`, {
+          limit,
+          offset,
+          show_archived,
+        }),
+      ).then((res) => ({
+        ...res,
+        data: res.data.map((attr) => ({
+          ...attr,
+          attribute_id: attr.id.attribute_id,
+          object_id: attr.id.object_id,
+        })),
+      })),
   }
 }
+
+const DEFAULT_LIMIT = 250
