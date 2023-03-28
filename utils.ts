@@ -77,16 +77,18 @@ export function parseEmails(str: string) {
 }
 
 /** Supports parsing domain from RFC5322 email address, and both with + without protocol  */
-export function parseDomain(input: string) {
+export function parseDomain(input: string, includeSubdomain?: boolean) {
   let email = parseEmail(input)
   if (email) {
-    return parseDomain(email.domain)
+    return parseDomain(email.domain, includeSubdomain)
   }
   const prefix = input.includes('://') ? '' : 'https://'
   const url = new URL(prefix + input)
   const parsed = psl.parse(url.hostname)
   if ('domain' in parsed && parsed.domain) {
-    return parsed.domain
+    return R.compact([includeSubdomain && parsed.subdomain, parsed.domain]).join(
+      '.',
+    )
   }
   // TODO: Use verror
   throw new Error(`${parsed.error?.code}: ${parsed.error?.message}`)

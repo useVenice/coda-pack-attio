@@ -209,10 +209,17 @@ pack.addFormula({
   connectionRequirement: coda.ConnectionRequirement.None,
   parameters: [
     coda.makeParameter({ name: 'url', type: pt.String, description: '' }),
+    coda.makeParameter({
+      name: 'includeSubdomain',
+      type: pt.Boolean,
+      description: '',
+      optional: true,
+    }),
   ],
   resultType: t.String,
   codaType: ht.Url,
-  execute: ([urlString]) => parseDomain(urlString),
+  execute: ([urlString, includeSubdomain]) =>
+    parseDomain(urlString, includeSubdomain),
 })
 
 pack.addFormula({

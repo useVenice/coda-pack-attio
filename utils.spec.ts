@@ -62,17 +62,19 @@ test.each([
 })
 
 test.each([
-  ['http://google.com', 'google.com'],
-  ['https://amazon.com', 'amazon.com'],
-  ['http://google.com?id=1232#fda', 'google.com'],
-  ['http://www.google.com?id=1232#fda', 'google.com'],
-  ['http://attio.com/ada/', 'attio.com'],
-  ['attio.com', 'attio.com'],
-  ['app.attio.com/test?adf=122', 'attio.com'],
-  ['tony@venice.is', 'venice.is'], // http:// gets added to prefix...
-  ['Hi Venice <hi@venice.is>', 'venice.is'],
-])('parseDomain(%o) -> %o', (input, output) => {
-  expect(parseDomain(input)).toEqual(output)
+  ['http://google.com', undefined, 'google.com'],
+  ['https://amazon.com', undefined, 'amazon.com'],
+  ['http://google.com?id=1232#fda', undefined, 'google.com'],
+  ['http://www.google.com?id=1232#fda', undefined, 'google.com'],
+  ['http://attio.com/ada/', undefined, 'attio.com'],
+  ['attio.com', undefined, 'attio.com'],
+  ['app.attio.com/test?adf=122', undefined, 'attio.com'],
+  ['tony@venice.is', undefined, 'venice.is'], // http:// gets added to prefix...
+  ['Hi Venice <hi@venice.is>', undefined, 'venice.is'],
+  ['app.attio.com/test?adf=122', true, 'app.attio.com'],
+  ['xxxx@resource.calendar.google.com', true, 'resource.calendar.google.com'],
+])('parseDomain(%o %o) -> %o', (input, includeSubdomain, output) => {
+  expect(parseDomain(input, includeSubdomain)).toEqual(output)
 })
 
 test.each([
