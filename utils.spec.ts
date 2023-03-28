@@ -24,6 +24,7 @@ test.each([
   ['undefined', 'undefined'],
   ['hello', 'hello'],
   ['"tests"', 'tests'],
+  ['', ''],
 ])('jsonParsePrimitive(%j) -> %o', (input, output) => {
   expect(jsonParsePrimitive(input)).toEqual(output)
 })
@@ -33,6 +34,8 @@ test.each([
   [['hello', 'world'], { hello: 'world' }],
   [['hello', 'world', 'novalue'], { hello: 'world', novalue: undefined }],
   [['hello', 'world', 3, 4], { hello: 'world', '3': 4 }],
+  [['hello', 'true'], { hello: true }],
+  [['hello', '"true"', 'notNumber', '"4"'], { hello: 'true', notNumber: '4' }],
 ])('jsonBuildObject(%j) -> %o', (input, output) => {
   expect(jsonBuildObject(...input)).toEqual(output)
 })

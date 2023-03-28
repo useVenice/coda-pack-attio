@@ -49,6 +49,12 @@ const params = {
     type: pt.String,
     description: '',
   }),
+  /** Key values array */
+  keyValues: coda.makeParameter({
+    type: pt.StringArray,
+    name: 'keyValues',
+    description: 'Key value pairs',
+  }),
 }
 
 /** TODO: This should be provided by the user */
@@ -137,11 +143,7 @@ pack.addFormula({
       type: pt.String,
       description: 'Handlebars template',
     }),
-    coda.makeParameter({
-      type: pt.StringArray,
-      name: 'keyValues',
-      description: 'Key value pairs',
-    }),
+    params.keyValues,
     coda.makeParameter({
       name: 'strict',
       type: pt.Boolean,
@@ -371,6 +373,31 @@ pack.addFormula({
   execute: async function ([collectionId, entryId], ctx) {
     const attio = withAttio(ctx.fetcher)
     await attio.deleteCollectionEntry(collectionId, entryId)
+    return true
+  },
+})
+
+pack.addFormula({
+  name: 'UpdateCollectionEntry',
+  description: 'Update collection entry. Quote values if needed',
+  isAction: true,
+  parameters: [
+    params.collectionId,
+    params.entryId,
+    coda.makeParameter({
+      type: pt.StringArray,
+      name: 'attributePairs',
+      description: 'Flattened [attribute id/slug, value] pairs',
+    }),
+  ],
+  // would be nice to support adding param for unique as well as adding by record id rather than email / domain
+  resultType: t.Boolean,
+  execute: async function ([collectionId, entryId, attributePairs], ctx) {
+    await withAttio(ctx.fetcher).patchCollectionEntry(
+      collectionId,
+      entryId,
+      jsonBuildObject(...attributePairs),
+    )
     return true
   },
 })

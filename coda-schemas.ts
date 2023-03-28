@@ -190,7 +190,7 @@ export const entrySchema = coda.makeObjectSchema({
 export const attributeSchema = coda.makeObjectSchema({
   properties: {
     attribute_id: { type: t.String },
-    object_id: { type: t.String, description: 'e.g. Collection Id, due to collections being objects in v2' },
+    collection_id: { type: t.String, description: 'Actually object Id, due to collections being objects in v2' },
     title: { type: t.String },
     description: { type: t.String },
     api_slug: { type: t.String },

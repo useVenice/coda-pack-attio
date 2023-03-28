@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { makeZodSchemas } from './schemas'
-import { buildUrl } from './utils'
+import { buildUrl, R } from './utils'
 
 export function withAttio(opts: {
   workspaceSlug: string
@@ -98,6 +98,20 @@ export function withAttio(opts: {
         'DELETE',
         `https://api.attio.com/v1/collections/${collectionId}/entries/${entryId}`,
       ),
+    patchCollectionEntry: (
+      collectionId: string,
+      entryId: string,
+      valueByAttribute: Record<string, unknown>,
+    ) =>
+      jsonHttp<{}>(
+        'PATCH',
+        `https://api.attio.com/v2/lists/${collectionId}/entries/${entryId}`,
+        {
+          data: {
+            entry_values: R.mapValues(valueByAttribute, (value) => [{ value }]),
+          },
+        },
+      ),
     listCollectionAttributes: (
       collectionId: string,
       {
@@ -118,7 +132,7 @@ export function withAttio(opts: {
         data: res.data.map((attr) => ({
           ...attr,
           attribute_id: attr.id.attribute_id,
-          object_id: attr.id.object_id,
+          collection_id: attr.id.object_id,
         })),
       })),
   }
