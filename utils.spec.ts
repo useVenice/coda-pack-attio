@@ -1,3 +1,4 @@
+import currency from 'currency.js'
 import URL from 'url-parse'
 import {
   arrayToSentence,
@@ -179,4 +180,16 @@ test('buildUrl', () => {
   expect(buildUrl('http://attio.com', { hello: 123, world: 'yes' })).toEqual(
     'http://attio.com/?hello=123&world=yes',
   )
+})
+
+test.each([
+  ['$50,000.00', 50000],
+  ['2323', 2323],
+  [555, 555],
+  ['not a number', 0],
+  ['', 0],
+  [null, 0],
+  [undefined, 0],
+])('parseCurrency(%o) -> %o', (input, output) => {
+  expect(currency(input).value).toEqual(output)
 })

@@ -1,3 +1,4 @@
+import currency from 'currency.js'
 import { z } from 'zod'
 import { makeZodSchemas } from './schemas'
 import { buildUrl, R } from './utils'
@@ -111,7 +112,7 @@ export function withAttio(opts: {
             entry_values: R.mapValues(valueByAttributeIdOrSlug, (v) => [
               // Attio seems to only validate the key relevant for attribute type, and ignores
               // invalid values for other types. So we can just send all the keys.
-              { value: v, currency_value: v },
+              { value: v, currency_value: currency(v as currency.Any).value },
             ]),
           },
         },
