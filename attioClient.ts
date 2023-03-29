@@ -101,14 +101,18 @@ export function withAttio(opts: {
     patchCollectionEntry: (
       collectionId: string,
       entryId: string,
-      valueByAttribute: Record<string, unknown>,
+      valueByAttributeIdOrSlug: Record<string, unknown>,
     ) =>
       jsonHttp<{}>(
         'PATCH',
         `https://api.attio.com/v2/lists/${collectionId}/entries/${entryId}`,
         {
           data: {
-            entry_values: R.mapValues(valueByAttribute, (value) => [{ value }]),
+            entry_values: R.mapValues(valueByAttributeIdOrSlug, (v) => [
+              // Attio seems to only validate the key relevant for attribute type, and ignores
+              // invalid values for other types. So we can just send all the keys.
+              { value: v, currency_value: v },
+            ]),
           },
         },
       ),
