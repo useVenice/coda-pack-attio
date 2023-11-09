@@ -111,8 +111,10 @@ export function withAttio(opts: {
           data: {
             entry_values: R.mapValues(valueByAttributeIdOrSlug, (v) => [
               // Attio seems to only validate the key relevant for attribute type, and ignores
-              // invalid values for other types. So we can just send all the keys.
-              { value: v, currency_value: currency(v as currency.Any).value },
+              // invalid values for other types. So we can just send all the keys. 
+              // , currency_value: currency(v as currency.Any).value
+              // update  2023-11-09_0835 appears to be not anymore...
+              { value: v },
             ]),
           },
         },
