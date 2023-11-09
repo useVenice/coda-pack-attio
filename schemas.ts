@@ -68,9 +68,13 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     record_id: re.id,
     record_url: `https://app.attio.com/${opts.workspaceSlug}/${re.contact_type}/${re.id}`,
     ...(re.contact_type === 'company'
-      ? { display_name: re.name, company: re, record_type: re.contact_type }
+      ? {
+          display_name: re.name || re.domains[0],
+          company: re,
+          record_type: re.contact_type,
+        }
       : {
-          display_name: joinName(re),
+          display_name: joinName(re) || re.email_addresses[0],
           person: re,
           record_type: re.contact_type,
         }),
@@ -147,5 +151,13 @@ export function makeZodSchemas(opts: { workspaceSlug: string }) {
     config: z.any(),
   })
 
-  return { person, company, record, collection, entry, transformRecord , v2Attribute}
+  return {
+    person,
+    company,
+    record,
+    collection,
+    entry,
+    transformRecord,
+    v2Attribute,
+  }
 }
